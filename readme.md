@@ -93,5 +93,87 @@ Watch Usage
 
 6.  › Press Enter to trigger a test run.按回车键重新触发测试
 
-## 异步代码的测试
+## mock的使用
+
+1. 捕获函数的调用和返回结果，以及this和调用顺序
+2. 它可以让我们自由的设置返回结果
+3. 改变函数的内部实现
+
+当需要获知函数是否被调用、函数的调用次数时，可以使用jest.fn()
+
+```javascript
+runCallback = (callback) => {
+    callback('abc');
+};
+test('测试runcallback', () => {
+    const func = jest.fn(); //mock函数，捕获函数的调用
+    runCallback(func);
+    runCallback(func);
+    runCallback(func);
+    expect(func.mock.calls[0]).toEqual(['abc']); // 函数func接收的参数是否为'abc'
+    expect(func.mock.calls.length).toBe(3); //函数func是否调用了3次
+    expect(func).toBeCalled();//函数func是否被调用了
+});
+```
+
+模拟返回值，方式一
+
+```javascript
+test('测试runcallback', () => {
+    const func = jest.fn(()=>{
+        return 100;
+    }); //可以往fn中传入一个函数，这个函数的返回值就是func的返回值
+    runCallback(func);
+    console.log(func.mock);
+});
+```
+
+模拟返回值，方式二
+
+```javascript
+test('测试runcallback返回值', () => {
+    const func = jest.fn(); //mock函数，捕获函数的调用
+    func.mockReturnValueOnce('hello'); //设置第一次的返回值
+    func.mockReturnValueOnce('tom');//设置第二次的返回值
+    func.mockReturnValueOnce('bob');//设置第三次的返回值
+    // 也可以链式调用
+    /*func.mockReturnValueOnce('hello')
+        .mockReturnValueOnce('tom')
+        .mockReturnValueOnce('bob');*/
+    // func.mockReturnValue('dell') 设置每次调用的返回值
+    runCallback(func);
+    runCallback(func);
+    runCallback(func);
+    console.log(func.mock);
+});
+```
+
+模拟函数底层运行逻辑
+
+```javascript
+const func = jest.fn(); //mock函数，捕获函数的调用
+func.mockImplementation((arg)=>{ //模拟函数底层运行逻辑
+    console.log(arg); // arg为调用func时传入的参数
+    return 'hello'
+});
+runCallback(func);
+expect(func).toBeCalledWith('abc') // 判断是否以参数'abc'来调用函数的
+```
+
+改变函数的内部实现
+
+```javascript
+const getData=()=>{
+    return axios.get('/api');
+}
+jest.mock('axios');
+test('测试getData',async ()=>{
+    // 改变函数的内部实现
+    // axios.get.mockResolvedValueOnce({data:'hello'}); //只模拟一次
+    axios.get.mockResolvedValue({data:'hello'});
+    await getData().then(data=>{
+        expect(data.data).toBe('hello')
+    })
+})
+```
 
